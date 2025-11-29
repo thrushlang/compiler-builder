@@ -34,6 +34,13 @@ pub struct LLVMBuild {
     build_x86_libs: bool,
     build_llvm_dylib: bool,
     static_link_libcpp: bool,
+    llvm_libc: bool,
+    enable_clang_modules: bool,
+    enable_libcpp: bool,
+    enable_pic: bool,
+    enable_pdb: bool,
+    optimize_tblgen: bool,
+    temporarily_allow_old_toolchain: bool,
 
     use_linker: String,
 }
@@ -59,7 +66,14 @@ impl LLVMBuild {
             build_share_libs: false,
             build_x86_libs: false,
             build_llvm_dylib: false,
+            enable_clang_modules: false,
             static_link_libcpp: false,
+            llvm_libc: false,
+            enable_libcpp: false,
+            enable_pic: true,
+            enable_pdb: false,
+            optimize_tblgen: false,
+            temporarily_allow_old_toolchain: false,
 
             use_linker: String::new(),
         }
@@ -130,6 +144,41 @@ impl LLVMBuild {
     #[inline]
     pub fn set_linker(&mut self, linker: String) {
         self.use_linker = linker;
+    }
+
+    #[inline]
+    pub fn set_llvm_libc(&mut self, llvm_libc: bool) {
+        self.llvm_libc = llvm_libc;
+    }
+
+    #[inline]
+    pub fn set_enable_pic(&mut self, enable_pic: bool) {
+        self.enable_pic = enable_pic;
+    }
+
+    #[inline]
+    pub fn set_enable_libcpp(&mut self, enable_libcpp: bool) {
+        self.enable_libcpp = enable_libcpp;
+    }
+
+    #[inline]
+    pub fn set_enable_clang_modules(&mut self, enable_clang_modules: bool) {
+        self.enable_clang_modules = enable_clang_modules;
+    }
+
+    #[inline]
+    pub fn set_enable_pdb(&mut self, enable_pdb: bool) {
+        self.enable_pdb = enable_pdb;
+    }
+
+    #[inline]
+    pub fn set_temporarily_allow_old_toolchain(&mut self, temporarily_allow_old_toolchain: bool) {
+        self.temporarily_allow_old_toolchain = temporarily_allow_old_toolchain;
+    }
+
+    #[inline]
+    pub fn set_optimize_tblgen(&mut self, optimize_tblgen: bool) {
+        self.optimize_tblgen = optimize_tblgen;
     }
 
     #[inline]
@@ -215,6 +264,41 @@ impl LLVMBuild {
     #[inline]
     pub fn linker(&self) -> &str {
         &self.use_linker
+    }
+
+    #[inline]
+    pub fn llvm_libc(&self) -> bool {
+        self.llvm_libc
+    }
+
+    #[inline]
+    pub fn enable_pic(&self) -> bool {
+        self.enable_pic
+    }
+
+    #[inline]
+    pub fn enable_libcpp(&self) -> bool {
+        self.enable_libcpp
+    }
+
+    #[inline]
+    pub fn enable_clang_modules(&self) -> bool {
+        self.enable_clang_modules
+    }
+
+    #[inline]
+    pub fn enable_pdb(&self) -> bool {
+        self.enable_pdb
+    }
+
+    #[inline]
+    pub fn temporarily_allow_old_toolchain(&self) -> bool {
+        self.temporarily_allow_old_toolchain
+    }
+
+    #[inline]
+    pub fn optimize_tblgen(&self) -> bool {
+        self.optimize_tblgen
     }
 }
 
@@ -407,28 +491,48 @@ pub fn build_and_install(
         cmake_command.arg(format!("-DLLVM_USE_LINKER={}", llvm_build.linker()));
     }
 
+    if !llvm_build.enable_pic() {
+        cmake_command.arg("-DLLVM_ENABLE_PIC=OFF");
+    }
+
+    if llvm_build.temporarily_allow_old_toolchain() {
+        cmake_command.arg("-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON");
+    }
+
+    if llvm_build.optimize_tblgen() {
+        cmake_command.arg("-DLLVM_OPTIMIZED_TABLEGEN=ON");
+    }
+
+    if llvm_build.enable_pdb() {
+        cmake_command.arg("-DLLVM_ENABLE_PDB=ON");
+    }
+
+    if llvm_build.enable_clang_modules() {
+        cmake_command.arg("-DLLVM_ENABLE_CLANG_MDDULES=ON");
+    }
+
+    if llvm_build.enable_libcpp() {
+        cmake_command.arg("-DLLVM_ENABLE_LIBCXX=ON");
+    }
+
+    if llvm_build.llvm_libc() {
+        cmake_command.arg("-DLLVM_ENABLE_LLVM_LIBC=TRUE");
+    }
+
     if llvm_build.static_link_libcpp() {
         cmake_command.arg("-DLLVM_STATIC_LINK_CXX_STDLIB=ON");
-    } else {
-        cmake_command.arg("-DLLVM_STATIC_LINK_CXX_STDLIB=OFF");
     }
 
     if llvm_build.share_libs() {
         cmake_command.arg("-DBUILD_SHARED_LIBS=ON");
-    } else {
-        cmake_command.arg("-DBUILD_SHARED_LIBS=OFF");
     }
 
     if llvm_build.x86_libs() {
         cmake_command.arg("-DLLVM_BUILD_32_BITS=ON");
-    } else {
-        cmake_command.arg("-DLLVM_BUILD_32_BITS=OFF");
     }
 
     if llvm_build.dylib() {
         cmake_command.arg("-DLLVM_BUILD_LLVM_DYLIB=ON");
-    } else {
-        cmake_command.arg("-DLLVM_BUILD_LLVM_DYLIB=OFF");
     }
 
     self::run_command_with_live_output(cmake_command, &llvm_archive_path, &llvm_source)?;

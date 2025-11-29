@@ -295,6 +295,90 @@ impl CommandLine {
                 self.advance();
             }
 
+            "--llvm-use-llvm-libc" => {
+                self.advance();
+
+                let use_llvm_libc: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_llvm_libc(use_llvm_libc);
+
+                self.advance();
+            }
+
+            "--llvm-pic" => {
+                self.advance();
+
+                let enable_pic: bool = self.peek().parse().unwrap_or(true);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_enable_pic(enable_pic);
+
+                self.advance();
+            }
+
+            "--llvm-libcpp" => {
+                self.advance();
+
+                let enable_libcpp: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_enable_libcpp(enable_libcpp);
+
+                self.advance();
+            }
+
+            "--llvm-clang-modules" => {
+                self.advance();
+
+                let enable_clang_modules: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_enable_clang_modules(enable_clang_modules);
+
+                self.advance();
+            }
+
+            "--llvm-pdb" => {
+                self.advance();
+
+                let enable_pdb: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_enable_pdb(enable_pdb);
+
+                self.advance();
+            }
+
+            "--llvm-temporarily-old-toolchain" => {
+                self.advance();
+
+                let temporarily_old_toolchain: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_temporarily_allow_old_toolchain(temporarily_old_toolchain);
+
+                self.advance();
+            }
+
+            "--llvm-optimize-tblgen" => {
+                self.advance();
+
+                let optimize_tblgen: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_optimize_tblgen(optimize_tblgen);
+
+                self.advance();
+            }
+
             "-gcc" => {
                 self.advance();
 
