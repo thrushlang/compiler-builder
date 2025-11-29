@@ -133,7 +133,7 @@ impl LLVMBuild {
     }
 
     #[inline]
-    pub fn set_url(&mut self) {
+    pub fn setup_all(&mut self) {
         self.url = format!(
             "https://github.com/llvm/llvm-project/releases/download/llvmorg-{}.{}.{}/llvm-project-{}.{}.{}.src.tar.xz",
             self.major(),
@@ -247,11 +247,13 @@ pub fn download_llvm(llvm_build: &LLVMBuild) -> Result<PathBuf, String> {
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    let tmp_path: PathBuf = self::system_temp_dir();
+    let tmp_path: PathBuf = self::get_system_temp_dir();
 
     let name: String = format!(
         "llvm-project-{}.{}.{}.src.tar.xz",
-        llvm_build.major, llvm_build.minor, llvm_build.patch
+        llvm_build.major(),
+        llvm_build.minor(),
+        llvm_build.patch()
     );
 
     let full_path: PathBuf = tmp_path.join(name);
@@ -293,14 +295,14 @@ pub fn decompress_llvm(
         .arg("-xf")
         .arg(llvm_archive_path)
         .arg("-C")
-        .arg(self::system_temp_dir());
+        .arg(self::get_system_temp_dir());
 
     if tar_command
         .status()
         .map_err(|e| format!("Failed to execute tar: {}", e))?
         .success()
     {
-        Ok(self::system_temp_dir().join(self::get_descompressed_folder_directory(llvm_build)))
+        Ok(self::get_system_temp_dir().join(self::get_descompressed_folder_directory(llvm_build)))
     } else {
         Err("Failed to decompress LLVM archive".into())
     }
@@ -429,41 +431,7 @@ pub fn build_and_install(
         cmake_command.arg("-DLLVM_BUILD_LLVM_DYLIB=OFF");
     }
 
-    self::run_command_with_live_output(
-        Command::new("cmake")
-            .arg("-G")
-            .arg("Ninja")
-            .arg("-S")
-            .arg(parent)
-            .arg("-B")
-            .arg(&build_dir)
-            .arg(format!(
-                "-DCMAKE_BUILD_TYPE={}",
-                llvm_build.release_type().get_repr()
-            ))
-            .arg(format!("-DCMAKE_C_COMPILER={}", llvm_build.c_compiler()))
-            .arg(format!(
-                "-DCMAKE_CXX_COMPILER={}",
-                llvm_build.cpp_compiler()
-            ))
-            .arg(format!("-DCMAKE_C_FLAGS={}", llvm_build.c_flags()))
-            .arg(format!("-DCMAKE_CXX_FLAGS={}", llvm_build.cpp_flags()))
-            .arg("-DCMAKE_DISABLE_FIND_PACKAGE_LibXml2=TRUE")
-            .arg("-DLLVM_ENABLE_LIBXML2=0")
-            .arg("-DLLVM_TARGETS_TO_BUILD=all")
-            .arg("-DLLVM_ENABLE_PROJECTS=llvm")
-            .arg("-DLLVM_ENABLE_TERMINFO=OFF")
-            .arg("-DLLVM_ENABLE_ZLIB=OFF")
-            .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install_dir.display()))
-            .args([
-                "-DLLVM_INCLUDE_BENCHMARKS=OFF",
-                "-DLLVM_BUILD_TESTS=OFF",
-                "-DLLVM_BUILD_EXAMPLES=OFF",
-                "-DLLVM_INCLUDE_TESTS=OFF",
-            ]),
-        &llvm_archive_path,
-        &llvm_source,
-    )?;
+    self::run_command_with_live_output(cmake_command, &llvm_archive_path, &llvm_source)?;
 
     self::run_command_with_live_output(
         Command::new("ninja").arg("-C").arg(&build_dir),
@@ -495,7 +463,7 @@ fn get_descompressed_folder_directory(llvm_build: &LLVMBuild) -> String {
     )
 }
 
-fn system_temp_dir() -> PathBuf {
+fn get_system_temp_dir() -> PathBuf {
     if let Ok(dir) = std::env::var("TMPDIR") {
         return PathBuf::from(dir);
     }

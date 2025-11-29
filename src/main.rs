@@ -4,6 +4,7 @@ use crate::cli::CommandLine;
 mod builder;
 mod cli;
 mod constants;
+mod gcc;
 mod help;
 mod llvm;
 mod logging;

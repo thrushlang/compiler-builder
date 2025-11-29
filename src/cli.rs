@@ -77,7 +77,11 @@ impl CommandLine {
     }
 
     fn prepare(&mut self) {
-        self.get_mut_options().get_mut_llvm_build().set_url();
+        self.get_mut_options().get_mut_llvm_build().setup_all();
+
+        if self.get_options().get_build_gcc_backend() {
+            self.get_mut_options().get_mut_gcc_build().setup_all();
+        }
     }
 
     fn check_requirements(&self) {
@@ -124,7 +128,7 @@ impl CommandLine {
                 process::exit(0);
             }
 
-            "-llvm-major" => {
+            "--llvm-major" => {
                 self.advance();
 
                 let major: u32 = self.peek().to_string().parse().unwrap_or(17);
@@ -133,7 +137,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-minor" => {
+            "--llvm-minor" => {
                 self.advance();
 
                 let minor: u32 = self.peek().to_string().parse().unwrap_or(0);
@@ -142,7 +146,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-patch" => {
+            "--llvm-patch" => {
                 self.advance();
 
                 let patch: u32 = self.peek().to_string().parse().unwrap_or(0);
@@ -151,7 +155,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-c-compiler" => {
+            "--llvm-c-compiler" => {
                 self.advance();
 
                 let c_compiler: String = self.peek().to_string();
@@ -163,7 +167,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-cpp-compiler" => {
+            "--llvm-cpp-compiler" => {
                 self.advance();
 
                 let cpp_compiler: String = self.peek().to_string();
@@ -175,7 +179,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-cpp-flags" => {
+            "--llvm-cpp-flags" => {
                 self.advance();
 
                 let flags: String = self.peek().to_string();
@@ -187,7 +191,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-c-flags" => {
+            "--llvm-c-flags" => {
                 self.advance();
 
                 let flags: String = self.peek().to_string();
@@ -199,7 +203,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-release-type" => {
+            "--llvm-release-type" => {
                 self.advance();
 
                 match self.peek() {
@@ -231,7 +235,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-build-share-libs" => {
+            "--llvm-build-share-libs" => {
                 self.advance();
 
                 let build_share_libs: bool = self.peek().to_string().parse().unwrap_or(true);
@@ -243,7 +247,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-build-x86-libs" => {
+            "--llvm-build-x86-libs" => {
                 self.advance();
 
                 let build_x86_libs: bool = self.peek().to_string().parse().unwrap_or(true);
@@ -255,7 +259,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-build-dylib" => {
+            "--llvm-build-dylib" => {
                 self.advance();
 
                 let build_dylib: bool = self.peek().to_string().parse().unwrap_or(true);
@@ -267,7 +271,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-link-statically-libcpp" => {
+            "--llvm-link-statically-libcpp" => {
                 self.advance();
 
                 let link_statically_libcpp: bool = self.peek().to_string().parse().unwrap_or(true);
@@ -279,7 +283,7 @@ impl CommandLine {
                 self.advance();
             }
 
-            "-llvm-use-linker" => {
+            "--llvm-use-linker" => {
                 self.advance();
 
                 let use_linker: String = self.peek().to_string();
@@ -287,6 +291,102 @@ impl CommandLine {
                 self.get_mut_options()
                     .get_mut_llvm_build()
                     .set_linker(use_linker);
+
+                self.advance();
+            }
+
+            "-gcc" => {
+                self.advance();
+
+                self.get_mut_options().set_build_gcc_backend(true);
+            }
+
+            "--gcc-major" => {
+                self.advance();
+
+                let major: u32 = self.peek().to_string().parse().unwrap_or(15);
+
+                self.get_mut_options().get_mut_gcc_build().set_major(major);
+
+                self.advance();
+            }
+
+            "--gcc-minor" => {
+                self.advance();
+
+                let minor: u32 = self.peek().to_string().parse().unwrap_or(2);
+
+                self.get_mut_options().get_mut_gcc_build().set_minor(minor);
+
+                self.advance();
+            }
+
+            "--gcc-patch" => {
+                self.advance();
+
+                let patch: u32 = self.peek().to_string().parse().unwrap_or(0);
+
+                self.get_mut_options().get_mut_gcc_build().set_patch(patch);
+
+                self.advance();
+            }
+
+            "--gcc-host-shared" => {
+                self.advance();
+
+                let host_shared: bool = self.peek().parse().unwrap_or(true);
+
+                self.get_mut_options()
+                    .get_mut_gcc_build()
+                    .set_host_shared(host_shared);
+
+                self.advance();
+            }
+
+            "--gcc-c-compiler-flags" => {
+                self.advance();
+
+                let flags: String = self.peek().to_string();
+
+                self.get_mut_options()
+                    .get_mut_gcc_build()
+                    .set_c_compiler_flags(flags);
+
+                self.advance();
+            }
+
+            "--gcc-cpp-compiler-flags" => {
+                self.advance();
+
+                let flags: String = self.peek().to_string();
+
+                self.get_mut_options()
+                    .get_mut_gcc_build()
+                    .set_cpp_compiler_flags(flags);
+
+                self.advance();
+            }
+
+            "--gcc-c-compiler-command" => {
+                self.advance();
+
+                let command: String = self.peek().to_string();
+
+                self.get_mut_options()
+                    .get_mut_gcc_build()
+                    .set_c_compiler_command(command);
+
+                self.advance();
+            }
+
+            "--gcc-cpp-compiler-command" => {
+                self.advance();
+
+                let command: String = self.peek().to_string();
+
+                self.get_mut_options()
+                    .get_mut_gcc_build()
+                    .set_cpp_compiler_command(command);
 
                 self.advance();
             }

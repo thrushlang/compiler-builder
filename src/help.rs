@@ -7,7 +7,7 @@ pub fn show_help() -> ! {
         logging::OutputIn::Stderr,
         &format!(
             "\n\n{} {} {}\n\n",
-            "Usage:", "compiler-builder", "[--flags]"
+            "Usage:", "compiler-builder", "[-flag|--flags]"
         ),
     );
 
@@ -29,13 +29,13 @@ pub fn show_help() -> ! {
         ),
     );
 
-    logging::write(logging::OutputIn::Stderr, "LLVM Build Commands:\n\n");
+    logging::write(logging::OutputIn::Stderr, "LLVM build flags:\n\n");
 
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
             "{} {} {}\n",
-            "•", "-llvm-major", "Set LLVM major version (default: 17).",
+            "•", "--llvm-major", "Set LLVM major version (default: 17).",
         ),
     );
 
@@ -43,7 +43,7 @@ pub fn show_help() -> ! {
         logging::OutputIn::Stderr,
         &format!(
             "{} {} {}\n",
-            "•", "-llvm-minor", "Set LLVM minor version (default: 0).",
+            "•", "--llvm-minor", "Set LLVM minor version (default: 0).",
         ),
     );
 
@@ -51,48 +51,52 @@ pub fn show_help() -> ! {
         logging::OutputIn::Stderr,
         &format!(
             "{} {} {}\n",
-            "•", "-llvm-patch", "Set LLVM patch version (default: 6).",
+            "•", "--llvm-patch", "Set LLVM patch version (default: 6).",
         ),
     );
 
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {}\n",
-            "•", "-llvm-c-compiler", "Set C compiler for LLVM build (default: clang).",
+            "{} {} {} {}\n",
+            "•", "--llvm-c-compiler", "[clang]", "Set C compiler for LLVM build (default: clang).",
         ),
     );
 
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {}\n",
-            "•", "-llvm-cpp-compiler", "Set C++ compiler for LLVM build (default: clang++).",
-        ),
-    );
-
-    logging::write(
-        logging::OutputIn::Stderr,
-        &format!(
-            "{} {} {}\n",
-            "•", "-llvm-c-flags", "Set C flags for LLVM build.",
-        ),
-    );
-
-    logging::write(
-        logging::OutputIn::Stderr,
-        &format!(
-            "{} {} {}\n",
-            "•", "-llvm-cpp-flags", "Set C++ flags for LLVM build.",
-        ),
-    );
-
-    logging::write(
-        logging::OutputIn::Stderr,
-        &format!(
-            "{} {} {}\n",
+            "{} {} {} {}\n",
             "•",
-            "-llvm-release-type",
+            "--llvm-cpp-compiler",
+            "[clang++]",
+            "Set C++ compiler for LLVM build (default: clang++).",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•", "--llvm-c-flags", "[-O3]", "Set C flags for LLVM build.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•", "--llvm-cpp-flags", "[-Oz]", "Set C++ flags for LLVM build.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•",
+            "--llvm-release-type",
+            "[Debug|Release|MinSizeRel]",
             "Set LLVM release type (Debug, Release, MinSizeRel) (default: Release).",
         ),
     );
@@ -100,32 +104,44 @@ pub fn show_help() -> ! {
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {}\n",
-            "•", "-llvm-build-share-libs", "Build LLVM shared libraries (default: false).",
+            "{} {} {} {}\n",
+            "•",
+            "--llvm-build-share-libs",
+            "[true|false]",
+            "Build LLVM shared libraries (default: false).",
         ),
     );
 
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {}\n",
-            "•", "-llvm-build-x86-libs", "Build x86 (32-bit) libraries for LLVM (default: false).",
+            "{} {} {} {}\n",
+            "•",
+            "--llvm-build-x86-libs",
+            "[true|false]",
+            "Build x86 (32-bit) libraries for LLVM (default: false).",
         ),
     );
 
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {}\n",
-            "•", "-llvm-build-dylib", "Build LLVM dynamic library (default: false).",
+            "{} {} {} {}\n",
+            "•",
+            "--llvm-build-dylib",
+            "[true|false]",
+            "Build LLVM dynamic library (default: false).",
         ),
     );
 
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {}\n",
-            "•", "-llvm-link-statically-libcpp", "Link libcpp statically (default: false).",
+            "{} {} {} {}\n",
+            "•",
+            "--llvm-link-statically-libcpp",
+            "[true|false]",
+            "Link libcpp statically (default: false).",
         ),
     );
 
@@ -133,7 +149,81 @@ pub fn show_help() -> ! {
         logging::OutputIn::Stderr,
         &format!(
             "{} {} {}\n\n",
-            "•", "-llvm-use-linker", "Set linker to use for LLVM build.",
+            "•", "--llvm-use-linker", "[lld] Set linker to use for LLVM build.",
+        ),
+    );
+
+    logging::write(logging::OutputIn::Stderr, "GCC build flags:\n\n");
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {}\n",
+            "•", "-gcc", "Enable to build GCC backend for the compiler.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {}\n",
+            "•", "--gcc-major", "Set GCC major version (default: 15).",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {}\n",
+            "•", "--gcc-minor", "Set GCC minor version (default: 2).",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {}\n",
+            "•", "--gcc-patch", "Set GCC patch version (default: 0).",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•", "--gcc-host-shared", "[true|false]", "Enable host shared for GCC (default: true).",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•", "--gcc-c-compiler-flags", "[-O2 -g]", "Set C compiler flags for GCC build.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•", "--gcc-cpp-compiler-flags", "[-O2 -g]", "Set C++ compiler flags for GCC build.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n",
+            "•", "--gcc-c-compiler-command", "[gcc]", "Set C compiler command for GCC build.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n\n",
+            "•", "--gcc-cpp-compiler-command", "[g++]", "Set C++ compiler command for GCC build.",
         ),
     );
 

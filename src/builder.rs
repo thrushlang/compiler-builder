@@ -1,6 +1,6 @@
 use crate::logging::LoggingType;
 use crate::options::BuildOptions;
-use crate::{llvm, logging, utils};
+use crate::{gcc, llvm, logging, utils};
 
 #[derive(Debug)]
 pub struct CompilerBuilderDependencies<'a> {
@@ -20,7 +20,15 @@ impl<'a> CompilerBuilderDependencies<'a> {
             logging::log(LoggingType::Panic, &err);
         }
 
-        logging::log(LoggingType::Log, "LLVM installed.\n\n");
+        logging::log(LoggingType::Log, "LLVM backend installed.\n\n");
+
+        if self.get_options().get_build_gcc_backend() {
+            if let Err(err) = self.build_gcc() {
+                logging::log(LoggingType::Panic, &err);
+            }
+
+            logging::log(LoggingType::Log, "GCC backend installed.\n\n");
+        }
     }
 }
 
@@ -28,8 +36,8 @@ impl CompilerBuilderDependencies<'_> {
     fn build_llvm(&self) -> Result<(), String> {
         let llvm_build: &llvm::LLVMBuild = self.get_options().get_llvm_build();
 
-        let _ = std::fs::remove_dir_all(utils::get_compiler_dependencies_build_path());
-        let _ = std::fs::remove_dir_all(utils::get_compiler_dependencies_build_path());
+        let _ = std::fs::remove_dir(utils::get_compiler_dependencies_build_path());
+        let _ = std::fs::create_dir_all(utils::get_compiler_dependencies_build_path());
 
         logging::log(LoggingType::Log, "Downloading LLVM...\n");
 
@@ -41,7 +49,21 @@ impl CompilerBuilderDependencies<'_> {
         llvm::prepare_build_directory(&llvm_source)?;
         llvm::build_and_install(llvm_build, llvm_downloaded, llvm_source)?;
 
-        logging::log(LoggingType::Log, "\nLLVM installed.");
+        Ok(())
+    }
+
+    fn build_gcc(&self) -> Result<(), String> {
+        let gcc_build: &gcc::GCCBuild = self.get_options().get_gcc_build();
+
+        logging::log(LoggingType::Log, "Downloading GCC...\n");
+
+        let gcc_downloaded: std::path::PathBuf = gcc::download_gcc(gcc_build)?;
+        let gcc_source: std::path::PathBuf = gcc::decompress_gcc(gcc_build, &gcc_downloaded)?;
+
+        logging::log(LoggingType::Log, "Building GCC...\n");
+
+        gcc::prepare_build_directory(&gcc_source)?;
+        gcc::build_and_install(gcc_build, gcc_downloaded, gcc_source)?;
 
         Ok(())
     }
