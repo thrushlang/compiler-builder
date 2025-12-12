@@ -42,6 +42,32 @@ LLVM build flags:
 
 For more information: https://llvm.org/docs/CMake.html
 
+Libclang build flags:
+
+• --libclang Enable to build the libclang for the compiler.
+• --libclang-major Set libclang major version (default: 17).
+• --libclang-minor Set libclang minor version (default: 0).
+• --libclang-patch Set libclang patch version (default: 0).
+• --libclang-c-compiler [clang] Set C compiler for libclang build (default: clang).
+• --libclang-cpp-compiler [clang++] Set C++ compiler for libclang build (default: clang++).
+• --libclang-c-flags [-O3] Set C compiler flags for libclang build.
+• --libclang-cpp-flags [-Oz] Set C++ compiler flags for libclang build.
+• --libclang-release-type [Debug|Release|MinSizeRel] Set libclang release type (Debug, Release, MinSizeRel) (default: Release).
+• --libclang-build-share-libs [true|false] Flag indicating if each libclang component is built as a shared library (ON) or as a static library (OFF) (default: true).
+• --libclang-build-x86-libs [true|false] Build 32-bit executables and libraries on 64-bit systems for libclang (default: true).
+• --libclang-build-dylib [true|false] If enabled, build libclang as a dynamic library (default: true).
+• --libclang-link-statically-libcpp [true|false] Statically link to the C++ standard library if possible for libclang (default: true).
+• --libclang-use-linker [lld] Override the system's default linker for libclang build.
+• --libclang-use-llvm-libc [true|false] Use LLVM libc overlay for libclang build (default: false).
+• --libclang-pic [true|false] Add the -fPIC flag to the compiler command-line for libclang (default: true).
+• --libclang-libcpp [true|false] Use libc++ instead of stdlibc++ for libclang build (default: false).
+• --libclang-clang-modules [true|false] Compile with Clang Header Modules for libclang (default: false).
+• --libclang-pdb [true|false] Generate PDB files for Windows builds using MSVC or clang-cl for libclang (default: false).
+• --libclang-temporarily-old-toolchain [true|false] Allow temporarily old toolchain for libclang build (default: false).
+• --libclang-optimize-tblgen [true|false] Optimize tablegen for libclang build (default: false).
+
+For more information: https://clang.llvm.org/docs/LibClang.html
+
 GCC build flags:
 
 • -gcc Enable to build GCC backend for the compiler.
@@ -56,8 +82,9 @@ GCC build flags:
 
 For more information: https://gcc.gnu.org/onlinedocs/jit/internals/index.html#working-on-the-jit-library
 
-Useful flags:
+Debug flags:
 
 • --debug-llvm Debug LLVM build commands.
+• --debug-libclang Debug libclang build commands.
 • --debug-gcc Debug GCC build commands.
 ```
