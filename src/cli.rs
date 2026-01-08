@@ -148,10 +148,32 @@ impl CommandLine {
                 std::process::exit(0);
             }
 
+            "-llvm-enable-custom-pipeline" => {
+                self.advance();
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_build_with_custom_pipeline(true);
+            }
+
+            "-llvm-pipeline" => {
+                self.advance();
+                self.valitate_llvm_custom_pipeline_required(arg);
+
+                let pipeline: Vec<String> =
+                    self.peek().split(";;").map(|sub| sub.to_string()).collect();
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_custom_pipeline(pipeline);
+
+                self.advance();
+            }
+
             "--llvm-major" => {
                 self.advance();
 
-                let major: u32 = self.peek().to_string().parse().unwrap_or(17);
+                let major: u32 = self.peek().parse().unwrap_or(17);
                 self.get_mut_options().get_mut_llvm_build().set_major(major);
 
                 self.advance();
@@ -160,7 +182,7 @@ impl CommandLine {
             "--llvm-minor" => {
                 self.advance();
 
-                let minor: u32 = self.peek().to_string().parse().unwrap_or(0);
+                let minor: u32 = self.peek().parse().unwrap_or(0);
                 self.get_mut_options().get_mut_llvm_build().set_minor(minor);
 
                 self.advance();
@@ -169,7 +191,7 @@ impl CommandLine {
             "--llvm-patch" => {
                 self.advance();
 
-                let patch: u32 = self.peek().to_string().parse().unwrap_or(0);
+                let patch: u32 = self.peek().parse().unwrap_or(0);
                 self.get_mut_options().get_mut_llvm_build().set_patch(patch);
 
                 self.advance();
@@ -255,10 +277,22 @@ impl CommandLine {
                 self.advance();
             }
 
+            "--llvm-link-libffi" => {
+                self.advance();
+
+                let link_libffi: bool = self.peek().parse().unwrap_or(false);
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_llvm_interpreter_ffi(link_libffi);
+
+                self.advance();
+            }
+
             "--llvm-build-share-libs" => {
                 self.advance();
 
-                let build_share_libs: bool = self.peek().to_string().parse().unwrap_or(true);
+                let build_share_libs: bool = self.peek().parse().unwrap_or(false);
 
                 self.get_mut_options()
                     .get_mut_llvm_build()
@@ -270,7 +304,7 @@ impl CommandLine {
             "--llvm-build-x86-libs" => {
                 self.advance();
 
-                let build_x86_libs: bool = self.peek().to_string().parse().unwrap_or(true);
+                let build_x86_libs: bool = self.peek().parse().unwrap_or(true);
 
                 self.get_mut_options()
                     .get_mut_llvm_build()
@@ -282,7 +316,7 @@ impl CommandLine {
             "--llvm-build-dylib" => {
                 self.advance();
 
-                let build_dylib: bool = self.peek().to_string().parse().unwrap_or(true);
+                let build_dylib: bool = self.peek().parse().unwrap_or(true);
 
                 self.get_mut_options()
                     .get_mut_llvm_build()
@@ -294,7 +328,7 @@ impl CommandLine {
             "--llvm-link-statically-libcpp" => {
                 self.advance();
 
-                let link_statically_libcpp: bool = self.peek().to_string().parse().unwrap_or(true);
+                let link_statically_libcpp: bool = self.peek().parse().unwrap_or(true);
 
                 self.get_mut_options()
                     .get_mut_llvm_build()
@@ -783,6 +817,17 @@ impl CommandLine {
             _ => {
                 help::show_help();
             }
+        }
+    }
+}
+
+impl CommandLine {
+    pub fn valitate_llvm_custom_pipeline_required(&self, arg: &str) {
+        if !self.get_options().get_llvm_build().need_custom_pipeline() {
+            self.report_error(&format!(
+                "Can't use '{}' without '-llvm-enable-pipeline' flag previously.",
+                arg
+            ));
         }
     }
 }

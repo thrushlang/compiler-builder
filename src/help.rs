@@ -35,6 +35,25 @@ pub fn show_help() -> ! {
         logging::OutputIn::Stderr,
         &format!(
             "{} {} {}\n",
+            "•", "-llvm-enable-pipeline", "Enable a custom build pipeline for LLVM.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n\n",
+            "•",
+            "-llvm-pipeline",
+            "[\"-DLLVM_ENABLE_PROJECTS=\"clang;lldb\";;-DLLVM_TARGETS_TO_BUILD=X86\"]",
+            "Set the custom build pipeline for LLVM. Separators in the string are ';;'.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {}\n",
             "•", "--llvm-major", "Set LLVM major version (default: 17).",
         ),
     );
@@ -225,11 +244,22 @@ pub fn show_help() -> ! {
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
-            "{} {} {} {}\n\n",
+            "{} {} {} {}\n",
             "•",
             "--llvm-optimize-tblgen",
             "[true|false]",
             "If enabled and building a debug or assert build, the CMake build system will generate a Release build tree to build a fully optimized tablegen for use during the build. Enabling this option can significantly speed up build times, especially when building LLVM in Debug configurations. (default: false).",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
+            "{} {} {} {}\n\n",
+            "•",
+            "--llvm-link-libffi",
+            "[true|false]",
+            "Indicates whether the LLVM Interpreter will be linked with the Foreign Function Interface library (libffi) in order to enable calling external functions. (default: true).",
         ),
     );
 

@@ -39,11 +39,15 @@ pub struct LLVMBuild {
     enable_pic: bool,
     enable_pdb: bool,
     optimize_tblgen: bool,
+    link_interpreter_with_libffi: bool,
     temporarily_allow_old_toolchain: bool,
 
     use_linker: String,
 
     debug_commands: bool,
+
+    build_with_custom_pipeline: bool,
+    custom_pipeline: Vec<String>,
 }
 
 impl LLVMBuild {
@@ -74,11 +78,14 @@ impl LLVMBuild {
             enable_pic: true,
             enable_pdb: false,
             optimize_tblgen: false,
+            link_interpreter_with_libffi: true,
             temporarily_allow_old_toolchain: false,
 
             use_linker: String::new(),
 
             debug_commands: false,
+            build_with_custom_pipeline: false,
+            custom_pipeline: Vec::new(),
         }
     }
 }
@@ -187,6 +194,21 @@ impl LLVMBuild {
     #[inline]
     pub fn set_debug_commands(&mut self, value: bool) {
         self.debug_commands = value;
+    }
+
+    #[inline]
+    pub fn set_llvm_interpreter_ffi(&mut self, value: bool) {
+        self.link_interpreter_with_libffi = value;
+    }
+
+    #[inline]
+    pub fn set_build_with_custom_pipeline(&mut self, value: bool) {
+        self.build_with_custom_pipeline = value;
+    }
+
+    #[inline]
+    pub fn set_custom_pipeline(&mut self, pipeline: Vec<String>) {
+        self.custom_pipeline = pipeline;
     }
 
     #[inline]
@@ -307,6 +329,21 @@ impl LLVMBuild {
     #[inline]
     pub fn optimize_tblgen(&self) -> bool {
         self.optimize_tblgen
+    }
+
+    #[inline]
+    pub fn need_libfii_link(&self) -> bool {
+        self.link_interpreter_with_libffi
+    }
+
+    #[inline]
+    pub fn need_custom_pipeline(&self) -> bool {
+        self.build_with_custom_pipeline
+    }
+
+    #[inline]
+    pub fn get_custom_pipeline(&self) -> &[String] {
+        &self.custom_pipeline
     }
 
     #[inline]
@@ -471,125 +508,183 @@ pub fn build_and_install(
     let parent: &Path = build_dir.parent().unwrap_or(&build_dir);
     let install_dir: PathBuf = utils::get_compiler_llvm_build_path();
 
-    let mut cmake_binding: std::process::Command = std::process::Command::new("cmake");
+    if !llvm_build.need_custom_pipeline() {
+        let mut cmake_binding: std::process::Command = std::process::Command::new("cmake");
 
-    let cmake_command: &mut std::process::Command = cmake_binding
-        .arg("-G")
-        .arg("Ninja")
-        .arg("-S")
-        .arg(parent)
-        .arg("-B")
-        .arg(&build_dir)
-        .arg(format!(
-            "-DCMAKE_BUILD_TYPE={}",
-            llvm_build.release_type().get_repr()
-        ))
-        .arg(format!("-DCMAKE_C_COMPILER={}", llvm_build.c_compiler()))
-        .arg(format!(
-            "-DCMAKE_CXX_COMPILER={}",
-            llvm_build.cpp_compiler()
-        ))
-        .arg(format!("-DCMAKE_C_FLAGS={}", llvm_build.c_flags()))
-        .arg(format!("-DCMAKE_CXX_FLAGS={}", llvm_build.cpp_flags()))
-        .arg("-DCMAKE_DISABLE_FIND_PACKAGE_LibXml2=TRUE")
-        .arg("-DLLVM_ENABLE_LIBXML2=0")
-        .arg("-DLLVM_TARGETS_TO_BUILD=all")
-        .arg("-DLLVM_ENABLE_PROJECTS=llvm")
-        .arg("-DLLVM_ENABLE_TERMINFO=OFF")
-        .arg("-DLLVM_ENABLE_ZLIB=OFF")
-        .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install_dir.display()))
-        .args([
-            "-DLLVM_INCLUDE_BENCHMARKS=OFF",
-            "-DLLVM_BUILD_TESTS=OFF",
-            "-DLLVM_BUILD_EXAMPLES=OFF",
-            "-DLLVM_INCLUDE_TESTS=OFF",
-        ]);
+        let cmake_command: &mut std::process::Command = cmake_binding
+            .arg("-G")
+            .arg("Ninja")
+            .arg("-S")
+            .arg(parent)
+            .arg("-B")
+            .arg(&build_dir)
+            .arg(format!(
+                "-DCMAKE_BUILD_TYPE={}",
+                llvm_build.release_type().get_repr()
+            ))
+            .arg(format!("-DCMAKE_C_COMPILER={}", llvm_build.c_compiler()))
+            .arg(format!(
+                "-DCMAKE_CXX_COMPILER={}",
+                llvm_build.cpp_compiler()
+            ))
+            .arg(format!("-DCMAKE_C_FLAGS={}", llvm_build.c_flags()))
+            .arg(format!("-DCMAKE_CXX_FLAGS={}", llvm_build.cpp_flags()))
+            .arg("-DCMAKE_DISABLE_FIND_PACKAGE_LibXml2=TRUE")
+            .arg("-DLLVM_ENABLE_LIBXML2=0")
+            .arg("-DLLVM_TARGETS_TO_BUILD=all")
+            .arg("-DLLVM_ENABLE_PROJECTS=llvm")
+            .arg("-DLLVM_ENABLE_TERMINFO=OFF")
+            .arg("-DLLVM_ENABLE_ZLIB=OFF")
+            .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install_dir.display()))
+            .args([
+                "-DLLVM_INCLUDE_BENCHMARKS=OFF",
+                "-DLLVM_BUILD_TESTS=OFF",
+                "-DLLVM_BUILD_EXAMPLES=OFF",
+                "-DLLVM_INCLUDE_TESTS=OFF",
+            ]);
 
-    if !llvm_build.linker().is_empty() {
-        cmake_command.arg(format!("-DLLVM_USE_LINKER={}", llvm_build.linker()));
+        if !llvm_build.linker().is_empty() {
+            cmake_command.arg(format!("-DLLVM_USE_LINKER={}", llvm_build.linker()));
+        }
+
+        if !llvm_build.enable_pic() {
+            cmake_command.arg("-DLLVM_ENABLE_PIC=OFF");
+        }
+
+        if llvm_build.temporarily_allow_old_toolchain() {
+            cmake_command.arg("-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON");
+        }
+
+        if llvm_build.optimize_tblgen() {
+            cmake_command.arg("-DLLVM_OPTIMIZED_TABLEGEN=ON");
+        }
+
+        if llvm_build.enable_pdb() {
+            cmake_command.arg("-DLLVM_ENABLE_PDB=ON");
+        }
+
+        if llvm_build.enable_clang_modules() {
+            cmake_command.arg("-DLLVM_ENABLE_CLANG_MDDULES=ON");
+        }
+
+        if llvm_build.enable_libcpp() {
+            cmake_command.arg("-DLLVM_ENABLE_LIBCXX=ON");
+        }
+
+        if llvm_build.llvm_libc() {
+            cmake_command.arg("-DLLVM_ENABLE_LLVM_LIBC=TRUE");
+        }
+
+        if llvm_build.static_link_libcpp() {
+            cmake_command.arg("-DLLVM_STATIC_LINK_CXX_STDLIB=ON");
+        }
+
+        if llvm_build.share_libs() {
+            cmake_command.arg("-DBUILD_SHARED_LIBS=ON");
+        }
+
+        if llvm_build.x86_libs() {
+            cmake_command.arg("-DLLVM_BUILD_32_BITS=ON");
+        }
+
+        if llvm_build.dylib() {
+            cmake_command.arg("-DLLVM_BUILD_LLVM_DYLIB=ON");
+        }
+
+        if llvm_build.need_libfii_link() {
+            cmake_command.arg("-DLLVM_ENABLE_FFI=ON");
+        }
+
+        if llvm_build.debug_commands() {
+            logging::log(
+                logging::LoggingType::Debug,
+                &format!("Executing CMake command: {:?}", cmake_command),
+            );
+        }
+
+        self::run_command_with_live_output(cmake_command, &llvm_archive_path, &llvm_source)?;
+
+        let mut ninja_build_binding: std::process::Command = std::process::Command::new("ninja");
+        let ninja_build_command: &mut std::process::Command =
+            ninja_build_binding.arg("-C").arg(&build_dir);
+
+        if llvm_build.debug_commands() {
+            logging::log(
+                logging::LoggingType::Debug,
+                &format!("Executing Ninja command: {:?}", ninja_build_command),
+            );
+        }
+
+        self::run_command_with_live_output(ninja_build_command, &llvm_archive_path, &llvm_source)?;
+
+        let mut ninja_install_binding: std::process::Command = std::process::Command::new("ninja");
+
+        let ninja_install_command: &mut std::process::Command = ninja_install_binding
+            .arg("-C")
+            .arg(&build_dir)
+            .arg("install");
+
+        if llvm_build.debug_commands() {
+            logging::log(
+                logging::LoggingType::Debug,
+                &format!("Executing Ninja command: {:?}", ninja_install_command),
+            );
+        }
+
+        self::run_command_with_live_output(
+            ninja_install_command,
+            &llvm_archive_path,
+            &llvm_source,
+        )?;
+    } else {
+        let mut cmake_binding: std::process::Command = std::process::Command::new("cmake");
+
+        let pipeline: &[String] = llvm_build.get_custom_pipeline();
+
+        let cmake_command: &mut std::process::Command = cmake_binding.args(pipeline);
+
+        if llvm_build.debug_commands() {
+            logging::log(
+                logging::LoggingType::Debug,
+                &format!("Executing CMake command: {:?}", cmake_command),
+            );
+        }
+
+        self::run_command_with_live_output(cmake_command, &llvm_archive_path, &llvm_source)?;
+
+        let mut ninja_build_binding: std::process::Command = std::process::Command::new("ninja");
+        let ninja_build_command: &mut std::process::Command =
+            ninja_build_binding.arg("-C").arg(&build_dir);
+
+        if llvm_build.debug_commands() {
+            logging::log(
+                logging::LoggingType::Debug,
+                &format!("Executing Ninja command: {:?}", ninja_build_command),
+            );
+        }
+
+        self::run_command_with_live_output(ninja_build_command, &llvm_archive_path, &llvm_source)?;
+
+        let mut ninja_install_binding: std::process::Command = std::process::Command::new("ninja");
+
+        let ninja_install_command: &mut std::process::Command = ninja_install_binding
+            .arg("-C")
+            .arg(&build_dir)
+            .arg("install");
+
+        if llvm_build.debug_commands() {
+            logging::log(
+                logging::LoggingType::Debug,
+                &format!("Executing Ninja command: {:?}", ninja_install_command),
+            );
+        }
+
+        self::run_command_with_live_output(
+            ninja_install_command,
+            &llvm_archive_path,
+            &llvm_source,
+        )?;
     }
-
-    if !llvm_build.enable_pic() {
-        cmake_command.arg("-DLLVM_ENABLE_PIC=OFF");
-    }
-
-    if llvm_build.temporarily_allow_old_toolchain() {
-        cmake_command.arg("-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON");
-    }
-
-    if llvm_build.optimize_tblgen() {
-        cmake_command.arg("-DLLVM_OPTIMIZED_TABLEGEN=ON");
-    }
-
-    if llvm_build.enable_pdb() {
-        cmake_command.arg("-DLLVM_ENABLE_PDB=ON");
-    }
-
-    if llvm_build.enable_clang_modules() {
-        cmake_command.arg("-DLLVM_ENABLE_CLANG_MDDULES=ON");
-    }
-
-    if llvm_build.enable_libcpp() {
-        cmake_command.arg("-DLLVM_ENABLE_LIBCXX=ON");
-    }
-
-    if llvm_build.llvm_libc() {
-        cmake_command.arg("-DLLVM_ENABLE_LLVM_LIBC=TRUE");
-    }
-
-    if llvm_build.static_link_libcpp() {
-        cmake_command.arg("-DLLVM_STATIC_LINK_CXX_STDLIB=ON");
-    }
-
-    if llvm_build.share_libs() {
-        cmake_command.arg("-DBUILD_SHARED_LIBS=ON");
-    }
-
-    if llvm_build.x86_libs() {
-        cmake_command.arg("-DLLVM_BUILD_32_BITS=ON");
-    }
-
-    if llvm_build.dylib() {
-        cmake_command.arg("-DLLVM_BUILD_LLVM_DYLIB=ON");
-    }
-
-    if llvm_build.debug_commands() {
-        logging::log(
-            logging::LoggingType::Debug,
-            &format!("Executing CMake command: {:?}", cmake_command),
-        );
-    }
-
-    self::run_command_with_live_output(cmake_command, &llvm_archive_path, &llvm_source)?;
-
-    let mut ninja_build_binding: std::process::Command = std::process::Command::new("ninja");
-    let ninja_build_command: &mut std::process::Command =
-        ninja_build_binding.arg("-C").arg(&build_dir);
-
-    if llvm_build.debug_commands() {
-        logging::log(
-            logging::LoggingType::Debug,
-            &format!("Executing Ninja command: {:?}", ninja_build_command),
-        );
-    }
-
-    self::run_command_with_live_output(ninja_build_command, &llvm_archive_path, &llvm_source)?;
-
-    let mut ninja_install_binding: std::process::Command = std::process::Command::new("ninja");
-
-    let ninja_install_command: &mut std::process::Command = ninja_install_binding
-        .arg("-C")
-        .arg(&build_dir)
-        .arg("install");
-
-    if llvm_build.debug_commands() {
-        logging::log(
-            logging::LoggingType::Debug,
-            &format!("Executing Ninja command: {:?}", ninja_install_command),
-        );
-    }
-
-    self::run_command_with_live_output(ninja_install_command, &llvm_archive_path, &llvm_source)?;
 
     Ok(())
 }
