@@ -48,6 +48,9 @@ pub struct LLVMBuild {
 
     build_with_custom_pipeline: bool,
     custom_pipeline: Vec<String>,
+
+    use_llvm_package: bool,
+    llvm_package: PathBuf,
 }
 
 impl LLVMBuild {
@@ -89,6 +92,9 @@ impl LLVMBuild {
             debug_commands: false,
             build_with_custom_pipeline: false,
             custom_pipeline: Vec::new(),
+
+            use_llvm_package: false,
+            llvm_package: PathBuf::new(),
         }
     }
 }
@@ -212,6 +218,12 @@ impl LLVMBuild {
     #[inline]
     pub fn set_custom_pipeline(&mut self, pipeline: Vec<String>) {
         self.custom_pipeline = pipeline;
+    }
+
+    #[inline]
+    pub fn set_use_custom_llvm_package(&mut self, path: PathBuf) {
+        self.use_llvm_package = true;
+        self.llvm_package = path;
     }
 
     #[inline]
@@ -347,6 +359,16 @@ impl LLVMBuild {
     #[inline]
     pub fn get_custom_pipeline(&self) -> &[String] {
         &self.custom_pipeline
+    }
+
+    #[inline]
+    pub fn custom_llvm_package(&self) -> bool {
+        self.use_llvm_package
+    }
+
+    #[inline]
+    pub fn get_llvm_package(&self) -> &Path {
+        &self.llvm_package
     }
 
     #[inline]

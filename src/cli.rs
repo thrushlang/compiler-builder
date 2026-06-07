@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::constants;
 use crate::gcc::GCCBuild;
 use crate::help;
@@ -152,6 +154,18 @@ impl CommandLine {
                 );
 
                 std::process::exit(0);
+            }
+
+            "--llvm-package" => {
+                self.advance();
+
+                let path: PathBuf = PathBuf::from(self.peek());
+
+                self.get_mut_options()
+                    .get_mut_llvm_build()
+                    .set_use_custom_llvm_package(path);
+
+                self.advance();
             }
 
             "--llvm-enable-pipeline" => {

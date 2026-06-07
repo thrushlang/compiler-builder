@@ -34,6 +34,17 @@ pub fn show_help() -> ! {
     logging::write(
         logging::OutputIn::Stderr,
         &format!(
+            "{} {} {} {}\n",
+            "•",
+            "--llvm-package",
+            "[path/to/llvm/src/llvm.xz]",
+            "Enable the utilization of a local downloaded LLVM package. You should also utilize --llvm-major, --llvm-minor, --llvm-patch to indicate the LLVM version.",
+        ),
+    );
+
+    logging::write(
+        logging::OutputIn::Stderr,
+        &format!(
             "{} {} {}\n",
             "•", "--llvm-enable-pipeline", "Enable a custom build pipeline for LLVM.",
         ),

@@ -29,6 +29,11 @@ impl<'a> CompilerBuilderDependencies<'a> {
 
             logging::write(logging::OutputIn::Stdout, "GCC installed.\n\n");
         }
+
+        logging::write(
+            logging::OutputIn::Stdout,
+            "\nNow you can compile the compiler.\n",
+        );
     }
 }
 
@@ -49,13 +54,26 @@ impl CompilerBuilderDependencies<'_> {
 
         logging::write(logging::OutputIn::Stdout, "Downloading LLVM source...\n");
 
-        let llvm_downloaded: std::path::PathBuf = llvm::download_llvm(llvm_build)?;
-        let llvm_source: std::path::PathBuf = llvm::decompress_llvm(llvm_build, &llvm_downloaded)?;
+        if llvm_build.custom_llvm_package() {
+            let llvm_downloaded_path: &std::path::Path = llvm_build.get_llvm_package();
 
-        logging::write(logging::OutputIn::Stdout, "Building LLVM from source...\n");
+            let llvm_source: std::path::PathBuf =
+                llvm::decompress_llvm(llvm_build, llvm_downloaded_path)?;
 
-        llvm::prepare_build_directory(&llvm_source)?;
-        llvm::build_and_install(llvm_build, llvm_downloaded, llvm_source)?;
+            logging::write(logging::OutputIn::Stdout, "Building LLVM from source...\n");
+
+            llvm::prepare_build_directory(&llvm_source)?;
+            llvm::build_and_install(llvm_build, llvm_downloaded_path.to_path_buf(), llvm_source)?;
+        } else {
+            let llvm_downloaded: std::path::PathBuf = llvm::download_llvm(llvm_build)?;
+            let llvm_source: std::path::PathBuf =
+                llvm::decompress_llvm(llvm_build, &llvm_downloaded)?;
+
+            logging::write(logging::OutputIn::Stdout, "Building LLVM from source...\n");
+
+            llvm::prepare_build_directory(&llvm_source)?;
+            llvm::build_and_install(llvm_build, llvm_downloaded, llvm_source)?;
+        }
 
         Ok(())
     }

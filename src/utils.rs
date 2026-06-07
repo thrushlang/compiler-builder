@@ -70,7 +70,7 @@ pub fn get_compiler_llvm_build_path() -> PathBuf {
         _ => {
             logging::log(
                 LoggingType::Panic,
-                "Unsupported operating system for installing the dependencies required to build the Thrust Compiler.",
+                "Unsupported operating system for build the dependencies required to build the Thrust Compiler.",
             );
 
             std::process::exit(1);
