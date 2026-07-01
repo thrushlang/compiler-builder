@@ -8,9 +8,9 @@ This small tool builds the necessary dependencies for the compiler and places th
 
 ## Dependencies that it builds
 
-- LLVM. (http://llvm.org/)
-- GCC. (https://gcc.gnu.org/)
-- Clang. (libclang) (https://clang.llvm.org/docs/LibClang.html)
+- LLVM (http://llvm.org/)
+- GCC (https://gcc.gnu.org/)
+- Clang (libclang) (https://clang.llvm.org/docs/LibClang.html)
 
 
 ## Commands & Flags
