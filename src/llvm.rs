@@ -557,7 +557,7 @@ pub fn build_and_install(
             .arg("-DCMAKE_DISABLE_FIND_PACKAGE_LibXml2=TRUE")
             .arg("-DLLVM_ENABLE_LIBXML2=0")
             .arg("-DLLVM_TARGETS_TO_BUILD=all")
-            .arg("-DLLVM_ENABLE_PROJECTS=llvm;clang;lld")
+            .arg("-DLLVM_ENABLE_PROJECTS=llvm;clang")
             .arg("-DLLVM_ENABLE_TERMINFO=OFF")
             .arg("-DLLVM_ENABLE_ZLIB=OFF")
             .arg(format!("-DCMAKE_INSTALL_PREFIX={}", install_dir.display()))
